@@ -1,0 +1,21 @@
+import org.gradle.internal.jvm.Jvm
+
+apply plugin: 'java'
+apply plugin: "kotlin"
+apply plugin: "kotlin-kapt"
+
+
+dependencies {
+    def BSON_DEPENDENCY= '3.12.1'
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "com.squareup:javawriter:2.5.1"
+    implementation "org.mongodb:bson:${BSON_DEPENDENCY}"
+    kapt 'com.google.auto.service:auto-service:1.0-rc7'
+    implementation("com.google.auto.service:auto-service:1.0-rc7")
+    implementation 'com.squareup:javapoet:1.13.0'
+    compileOnly files(Jvm.current().getToolsJar())
+    compileOnly "io.realm:realm-annotations:$realm_version"
+}
+
+sourceCompatibility = "1.8"
+targetCompatibility = "1.8"
