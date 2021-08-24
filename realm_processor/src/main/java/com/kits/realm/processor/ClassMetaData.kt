@@ -636,7 +636,6 @@ class ClassMetaData(env: ProcessingEnvironment, typeMirrors: TypeMirrors, privat
 
     private fun categorizeField(element: Element): Boolean {
         val fieldRef = element as VariableElement
-        println("categorizeField ")
         // completely ignore any static fields
         if (fieldRef.modifiers.contains(Modifier.STATIC)) {
             return true

@@ -389,7 +389,6 @@ class RealmProcessor : AbstractProcessor() {
                 allValid = false
             }
         }
-
         return allValid
     }
 

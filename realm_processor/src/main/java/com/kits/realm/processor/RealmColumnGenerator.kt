@@ -66,7 +66,7 @@ class RealmColumnGenerator(private val env: ProcessingEnvironment) {
             emitEmptyLine()
             // 生成getter 方法
             emitGetterMethod(this)
-
+            emitGetterRealNameMethod(this)
             emitEmptyLine()
 
             endType()
@@ -114,6 +114,22 @@ class RealmColumnGenerator(private val env: ProcessingEnvironment) {
                 endMethod()
                 emitEmptyLine()
             }
+        }
+    }
+
+    /**
+     * 生成 columnName 方法
+     */
+    private fun emitGetterRealNameMethod(writer: JavaWriter){
+        writer.apply {
+            emitEmptyLine()
+            beginMethod("String", "columnName", EnumSet.of(Modifier.PUBLIC))
+            beginControlFlow("if(alias != null || alias.length() != 0)")
+            emitStatement("return alias")
+            endControlFlow()
+            emitStatement("return name")
+            endMethod()
+            emitEmptyLine()
         }
     }
 }

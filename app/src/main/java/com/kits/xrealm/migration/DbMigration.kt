@@ -21,125 +21,113 @@ class DbMigration : RealmMigration {
         val realmTableList = realm.sharedRealm.configuration.realmObjectClasses
         realmTableList.forEach {
             table->
-            // 获取table bean的 所有属性
+            // 获取所有的属性
             val fields = table.declaredFields
-            // 列信息
-            val columnList = mutableListOf<Column>()
+            val fieldNameMap = mutableMapOf<String,Class<*>>()
             fields.forEach {
                 field ->
-                    println("name == ${field.name}")
-                    if(!Modifier.isStatic(field.modifiers)){
-                        println("非静态属性 name == ${field.name}")
-                        field.declaredAnnotations.forEach {
-                            annotation ->
-                            println("annotation == $annotation")
-                        }
-                        if(!field.isAnnotationPresent(Ignore::class.java)){
-                            // 列名
-                            val column = Column(field.name, field.type as Class<Any>,
-                                    field.isAnnotationPresent(PrimaryKey::class.java),
-                                    field.isAnnotationPresent(Index::class.java),
-                                    field.isAnnotationPresent(Required::class.java))
-                            columnList.add(column)
+                if(!Modifier.isStatic(field.modifiers) && !Modifier.isTransient(field.modifiers)
+                    && field.getAnnotation(Ignore::class.java) == null){
+                    fieldNameMap[field.name] = field.type
+                }
+            }
+            val tableName = RealmMasterDao.tableDaoMap[table.name]?.tableName
+            if (tableName != null){
+                println("tableName == $tableName")
+                // 判断表是否存在
+                var realmObjectSchema :RealmObjectSchema ? = realm.schema.get(tableName)
+                if(realmObjectSchema == null){
+                    // 生成表
+                    realmObjectSchema = realm.schema.create(tableName)
+                    // 通过表名查到列信息
+                    val tableDao =  RealmMasterDao.tableDaoMap[table.name]
+                    // 获取列信息
+                    for ((name,type ) in fieldNameMap){
+                        tableDao?.getColumnByName(name)?.let { column->
+                            migrationAdd(realmObjectSchema,type,column)
                         }
                     }
-            }
-            println("columnList size == ${columnList.size}")
-            // 判断表是否存在
-            var realmObjectSchema :RealmObjectSchema ? = realm.schema.get(table.simpleName)
-            if(realmObjectSchema == null){
-                realmObjectSchema = realm.schema.create(table.simpleName)
-                columnList.forEach {
-                    column ->
-                        migrationAdd(realmObjectSchema,column)
-                }
-            }else{
-                columnList.forEach {
-                    column ->
-                    println("column 信息  == ${column}")
-                        if (!realmObjectSchema.hasField(column.name)){
-                            migrationAdd(realmObjectSchema, column)
+                }else{
+                    // 通过表名查到列信息
+                    val tableDao =  RealmMasterDao.tableDaoMap[table.name]
+                    // 判断列是否存在
+                    for((name,type) in fieldNameMap){
+                        if(!realmObjectSchema.hasField(name)){
+                            tableDao?.getColumnByName(name)?.let { column->
+                                migrationAdd(realmObjectSchema,type,column)
+                            }
                         }else{
-                           // migrationChange(realmObjectSchema, column)
+                            tableDao?.getColumnByName(name)?.let { column->
+                                migrationChange(realmObjectSchema,column)
+                            }
                         }
+                    }
                 }
             }
+
         }
     }
 
     /**
      * 数据库统一迁徙,对不存在的列进行新增
-     * @param realm 数据库操作
+     * @param realm 数据库操作R
      * @param column 列信息
      */
-    private fun migrationAdd(realm: RealmObjectSchema, column:Column){
-        val attributes = column.fieldAttributes().toTypedArray()
-        realm.addField(column.name,column.type, *attributes)
-
+    private fun migrationAdd(realm: RealmObjectSchema, clazz:Class<*>,column:RealmColumn){
+        val attributes = mutableListOf<FieldAttribute>()
+        if(column.PRIMARY_KEY()){
+            attributes.add(FieldAttribute.PRIMARY_KEY)
+        }
+        if(column.INDEXED()){
+            attributes.add(FieldAttribute.INDEXED)
+        }
+        if(column.REQUIRED()){
+            attributes.add(FieldAttribute.REQUIRED)
+        }
+        realm.addField(column.columnName(),clazz, *attributes.toTypedArray())
     }
 
 
     /**
-     * 数据库统一迁徙,对已存在的列进行修改，逻辑处理有问题，预留
+     * 数据库统一迁徙,对已存在的列进行修改属性进行修改
      * @param realm 数据库操作
      * @param column 列信息
      */
-    private fun migrationChange(realm: RealmObjectSchema,column:Column){
+    private fun migrationChange(realm: RealmObjectSchema,column:RealmColumn){
 
         FieldAttribute.values().forEach {
-            println("name = ${column.name} $it")
             when(it){
                 FieldAttribute.REQUIRED->
                     object :ChangeWrap(){
                         override fun removeChange() {
-                            // 非空注解，无法运行时获取，因此只支持添加,不支持删除
-                            super.noChange()
+                            realm.setRequired(column.columnName(),false)
                         }
 
                         override fun addChange() {
-                            super.addChange()
-                            realm.setRequired(column.name,true)
+                            realm.setRequired(column.columnName(),true)
                         }
-                    }.apply(realm.isRequired(column.name),column.required || column.primaryKey)
+                    }.apply(realm.isRequired(column.columnName()),column.REQUIRED())
                 FieldAttribute.INDEXED->
                     object :ChangeWrap(){
-                        // 原列是否为主键
-                        val dbPrimaryKey = realm.isPrimaryKey(column.name)
-                        // 升级后为主键
-                        val curPrimaryKey = column.primaryKey
-                        // 是否有 索引 注解
-                        val indexAnnotation = column.indexed
                         override fun removeChange() {
-                            if(!dbPrimaryKey && !curPrimaryKey){
-                                super.removeChange()
-                                realm.removeIndex(column.name)
-                            }else{
-                                noChange()
-                            }
+                            realm.removeIndex(column.columnName())
                         }
 
                         override fun addChange() {
-                            if(indexAnnotation){
-                                super.addChange()
-                                realm.addIndex(column.name)
-                            }else{
-                                noChange()
-                            }
+                            realm.addIndex(column.columnName())
                         }
 
-                    }.apply(realm.hasIndex(column.name),column.indexed)
+                    }.apply(realm.hasIndex(column.columnName()),column.INDEXED())
                 FieldAttribute.PRIMARY_KEY->
                     object :ChangeWrap(){
                         override fun removeChange() {
-                            super.removeChange()
                             realm.removePrimaryKey()
                         }
                         override fun addChange() {
-                            super.addChange()
-                            realm.addPrimaryKey(column.name)
+                            realm.addPrimaryKey(column.columnName())
                         }
 
-                    }.apply(realm.isPrimaryKey(column.name),column.primaryKey)
+                    }.apply(realm.isPrimaryKey(column.columnName()),column.PRIMARY_KEY())
             }
         }
     }
@@ -168,22 +156,18 @@ class DbMigration : RealmMigration {
         /**
          * 属性无变化
          */
-        open fun noChange(){
-            println("无变化")
-        }
+         fun noChange(){
+
+         }
 
         /**
          * 移除属性
          */
-        open  fun removeChange(){
-            println("移除属性")
-        }
+        abstract  fun removeChange()
 
         /**
          * 新增属性
          */
-        open  fun addChange(){
-            println("新增属性")
-        }
+        abstract fun addChange()
     }
 }

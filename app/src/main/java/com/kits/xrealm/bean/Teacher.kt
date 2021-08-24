@@ -15,6 +15,7 @@ open class Teacher : RealmObject(){
     @Index
     var data:Int = 100
     var simple:String? = null
+    var test1:String? = null
     // 属性不能是val
     // val testStr:String = "100"
     companion object{

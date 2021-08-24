@@ -49,7 +49,7 @@ class RealmMasterDaoGenerator (private val processingEnvironment: ProcessingEnvi
             emitEmptyLine()
 
             beginType(qualifiedGeneratedClassName,
-                "class")
+                "class", EnumSet.of(Modifier.PUBLIC))
             emitEmptyLine()
             emitFields(this)
 
