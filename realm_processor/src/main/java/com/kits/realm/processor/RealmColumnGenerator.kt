@@ -58,7 +58,7 @@ class RealmColumnGenerator(private val env: ProcessingEnvironment) {
             beginConstructor(EnumSet.of(Modifier.PUBLIC),constructorParams,null)
 
             for ((key,value) in propertyMap){
-                emitStatement("this.$key = $key;")
+                emitStatement("this.$key = $key")
             }
             endConstructor()
             //
