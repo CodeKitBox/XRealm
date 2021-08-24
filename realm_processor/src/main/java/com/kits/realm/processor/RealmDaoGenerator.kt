@@ -33,18 +33,14 @@ class RealmDaoGenerator(private val processingEnvironment: ProcessingEnvironment
     // 类的完整名称
     private val qualifiedJavaClassName: QualifiedClassName = metadata.qualifiedClassName
     // 生成的包名
-    private val generatedPackageName = metadata.packageName+".build"
+    private val generatedPackageName = metadata.packageName+Constants.DEFAULT_DAO_PACKAGE_NAME_SUFFIX
     // 生成的完整类名
-    private val generatedClassName: QualifiedClassName = QualifiedClassName(String.format(Locale.US, "%s.%s%s", generatedPackageName, simpleJavaClassName,"Dao"))
+    private val generatedClassName: QualifiedClassName = QualifiedClassName(String.format(Locale.US, "%s.%s%s", generatedPackageName, simpleJavaClassName,Constants.DEFAULT_DAO_CLASS_NAME_SUFFIX))
     // 数据库内部名称 -- 表名
     private val internalClassName: String = metadata.internalClassName
     @Throws(IOException::class)
     fun generate() {
         println("生成Dao文件 ")
-        println("简要名称 $simpleJavaClassName")
-        println("完整名称 $qualifiedJavaClassName")
-        println("生成的包名 $generatedPackageName")
-        println("生成的完整类名 $generatedClassName")
         val sourceFile = processingEnvironment.filer.createSourceFile(generatedClassName.toString())
         val imports = ArrayList(IMPORTS)
         val writer = JavaWriter(BufferedWriter(sourceFile.openWriter()))
@@ -161,13 +157,14 @@ class RealmDaoGenerator(private val processingEnvironment: ProcessingEnvironment
                     Constants.RealmFieldType.OBJECT -> {
                         val fieldTypeQualifiedName = Utils.getFieldTypeQualifiedName(field)
                         val internalClassName = Utils.getReferencedTypeInternalClassNameStatement(fieldTypeQualifiedName, classCollection)
-                        //emitField("RealmColumn", internalClassName, EnumSet.of(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL))
-                        //emitStatement("builder.addPersistedLinkProperty(%s, \"%s\", RealmFieldType.OBJECT, %s)", publicFieldName, internalFieldName, internalClassName)
+                        val initExpression = String.format("new RealmColumn(%s, \"%s\", RealmFieldType.OBJECT, %s)", publicFieldName, internalFieldName, internalClassName)
+                        emitField("RealmColumn", internalFieldName, EnumSet.of(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL), initExpression)
                     }
                     Constants.RealmFieldType.LIST -> {
                         val genericTypeQualifiedName = Utils.getGenericTypeQualifiedName(field)
                         val internalClassName = Utils.getReferencedTypeInternalClassNameStatement(genericTypeQualifiedName, classCollection)
-                        //emitStatement("builder.addPersistedLinkProperty(%s, \"%s\", RealmFieldType.LIST, %s)", publicFieldName, internalFieldName, internalClassName)
+                        val initExpression = String.format("new RealmColumn(%s, \"%s\", RealmFieldType.LIST, %s)", publicFieldName, internalFieldName, internalClassName)
+                        emitField("RealmColumn", internalFieldName, EnumSet.of(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL), initExpression)
                     }
                     Constants.RealmFieldType.INTEGER_LIST,
                     Constants.RealmFieldType.BOOLEAN_LIST,
@@ -182,6 +179,8 @@ class RealmDaoGenerator(private val processingEnvironment: ProcessingEnvironment
                     Constants.RealmFieldType.DOUBLE_LIST -> {
                         val requiredFlag = if (metadata.isElementNullable(field)) "!Property.REQUIRED" else "Property.REQUIRED"
                         //emitStatement("builder.addPersistedValueListProperty(%s, \"%s\", %s, %s)", publicFieldName, internalFieldName, fieldType.realmType, requiredFlag)
+                        val initExpression = String.format("new RealmColumn(%s, \"%s\", %s, %s)", publicFieldName, internalFieldName, fieldType.realmType, requiredFlag)
+                        emitField("RealmColumn", internalFieldName, EnumSet.of(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL), initExpression)
                     }
                     Constants.RealmFieldType.BACKLINK -> {
                         throw IllegalArgumentException("LinkingObject field should not be added to metadata")
@@ -220,6 +219,8 @@ class RealmDaoGenerator(private val processingEnvironment: ProcessingEnvironment
                         val valueNullable = metadata.isDictionaryValueNullable(field)
                         val requiredFlag = if (valueNullable) "!Property.REQUIRED" else "Property.REQUIRED"
                         //emitStatement("builder.addPersistedMapProperty(%s, \"%s\", %s, %s)", publicFieldName, internalFieldName, fieldType.realmType, requiredFlag)
+                        val initExpression = String.format("new RealmColumn(%s, \"%s\", %s, %s)", publicFieldName, internalFieldName, fieldType.realmType, requiredFlag)
+                        emitField("RealmColumn", internalFieldName, EnumSet.of(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL), initExpression)
                     }
                     Constants.RealmFieldType.STRING_TO_LINK_MAP -> {
                         val genericTypeQualifiedName = Utils.getGenericTypeQualifiedName(field)
@@ -248,6 +249,7 @@ class RealmDaoGenerator(private val processingEnvironment: ProcessingEnvironment
                     }
                 }
             }
+            // 这个暂时不处理
             for (backlink in metadata.backlinkFields) {
                 // Backlinks can only be created between classes in the current round of annotation processing
                 // as the forward link cannot be created unless you know the type already.

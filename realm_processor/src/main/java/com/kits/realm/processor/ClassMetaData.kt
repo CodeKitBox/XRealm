@@ -140,6 +140,10 @@ class ClassMetaData(env: ProcessingEnvironment, typeMirrors: TypeMirrors, privat
     val realmModelSetFields: Set<RealmFieldElement>
         get() = realmModelSets.toSet()
 
+    val qualifiedDaoClassName: QualifiedClassName
+        get() = QualifiedClassName(String.format("$packageName%s.$simpleJavaClassName%s",Constants.DEFAULT_DAO_PACKAGE_NAME_SUFFIX,
+            Constants.DEFAULT_DAO_CLASS_NAME_SUFFIX))
+
     /**
      * Returns `true if the class is considered to be a valid RealmObject class.
      * RealmObject and Proxy classes also have the @RealmClass annotation but are not considered valid

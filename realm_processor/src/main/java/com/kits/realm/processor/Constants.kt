@@ -33,6 +33,15 @@ object Constants {
             "throw new io.realm.exceptions.RealmException(\"Primary key field '%s' cannot be changed after object was created.\")"
     const val STATEMENT_EXCEPTION_ILLEGAL_JSON_LOAD
             = "throw new io.realm.exceptions.RealmException(\"\\\"%s\\\" field \\\"%s\\\" cannot be loaded from json\")"
+
+    /**
+     * Dao文件生成规则
+     * 包名：原包名的基础上添加 .build
+     * 类名： 在原类名的基础上添加 Dao
+     */
+    const val DEFAULT_DAO_PACKAGE_NAME_SUFFIX = ".build"
+    const val DEFAULT_DAO_CLASS_NAME_SUFFIX = "Dao"
+
     val JAVA_TO_REALM_TYPES = mapOf("byte" to RealmFieldType.INTEGER,
             "short" to RealmFieldType.INTEGER,
             "int" to RealmFieldType.INTEGER,

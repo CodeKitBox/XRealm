@@ -276,8 +276,17 @@ class RealmProcessor : AbstractProcessor() {
         }
 
         // Create RealmProxyMediators for all Realm modules
+        println("生成 RealmProxyMediators")
         for ((key, value) in moduleMetaData.allModules) {
+            println("key == $key ; value == $value")
             if (!createMediator(key.getSimpleName(), value)) {
+                return false
+            }
+        }
+        println("生成 RealmMasterDao")
+        for ((key, value) in moduleMetaData.allModules) {
+            println("key == $key ; value == $value")
+            if (!createMasterDao(key.getSimpleName(), value)) {
                 return false
             }
         }
@@ -346,6 +355,18 @@ class RealmProcessor : AbstractProcessor() {
 
         return true
     }
+
+    private fun createMasterDao(moduleName: SimpleClassName, moduleClasses: Set<ClassMetaData>): Boolean {
+        val masterDaoGenerator = RealmMasterDaoGenerator(processingEnv, moduleName, moduleClasses)
+        try {
+            masterDaoGenerator.generate()
+        } catch (e: IOException) {
+            Utils.error(e.message)
+            return false
+        }
+        return true
+    }
+
 
     // Because library classes are processed separately, there is no guarantee that this method can
     // see all of the classes necessary to completely validate all of the backlinks.  If it can find
