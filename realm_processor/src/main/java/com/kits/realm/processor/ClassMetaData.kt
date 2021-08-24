@@ -636,7 +636,7 @@ class ClassMetaData(env: ProcessingEnvironment, typeMirrors: TypeMirrors, privat
 
     private fun categorizeField(element: Element): Boolean {
         val fieldRef = element as VariableElement
-
+        println("categorizeField ")
         // completely ignore any static fields
         if (fieldRef.modifiers.contains(Modifier.STATIC)) {
             return true
@@ -650,7 +650,7 @@ class ClassMetaData(env: ProcessingEnvironment, typeMirrors: TypeMirrors, privat
         // Determine name for field
         val internalFieldName = getInternalFieldName(fieldRef, defaultFieldNameFormatter)
         val field = RealmFieldElement(fieldRef, internalFieldName)
-
+        println("categorizeField  ${field.javaName}")
         if (field.getAnnotation(Index::class.java) != null) {
             if (!categorizeIndexField(element, field)) {
                 return false

@@ -241,9 +241,13 @@ class RealmProxyClassGenerator(private val processingEnvironment: ProcessingEnvi
         }
     }
 
+    /**
+     * 支持的数据类型，
+     */
     @Throws(IOException::class)
     private fun emitPersistedFieldAccessors(writer: JavaWriter) {
         for (field in metadata.fields) {
+            println("emitPersistedFieldAccessors  fieldName = ${field.simpleName.toString()}")
             val fieldName = field.simpleName.toString()
             val fieldTypeCanonicalName = field.asType().toString()
             when {

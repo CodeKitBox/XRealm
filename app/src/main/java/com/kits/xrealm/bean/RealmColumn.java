@@ -42,6 +42,15 @@ public class RealmColumn {
         this.INDEXED = INDEXED;
     }
 
+    public RealmColumn(String alias, String internalName, RealmFieldType realmFieldType,  boolean REQUIRED) {
+        this.alias = alias;
+        this.internalName = internalName;
+        this.realmFieldType = realmFieldType;
+        this.PRIMARY_KEY = false;
+        this.REQUIRED = REQUIRED;
+        this.INDEXED = false;
+    }
+
     public String getAlias() {
         return alias;
     }

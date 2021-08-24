@@ -60,8 +60,9 @@ class RealmColumnGenerator(private val env: ProcessingEnvironment) {
             for ((key,value) in propertyMap){
                 emitStatement("this.$key = $key;")
             }
-
             endConstructor()
+            //
+            emitConstructorParam4(this)
             emitEmptyLine()
             // 生成getter 方法
             emitGetterMethod(this)
@@ -72,6 +73,37 @@ class RealmColumnGenerator(private val env: ProcessingEnvironment) {
             close()
         }
 
+    }
+
+    /**
+     * 生成四个参数的构造函数
+     *
+    public RealmColumn(String alias, String internalName, RealmFieldType realmFieldType,  boolean REQUIRED) {
+    this.alias = alias;
+    this.name = name;
+    this.realmFieldType = realmFieldType;
+    this.PRIMARY_KEY = false;
+    this.REQUIRED = REQUIRED;
+    this.INDEXED = false;
+    }
+     */
+    private fun emitConstructorParam4(writer: JavaWriter){
+        writer.apply {
+            emitEmptyLine()
+            val paramsArray = arrayOf("String","alias",
+                "String", "name",
+                "RealmFieldType", "realmFieldType",
+                "boolean","REQUIRED")
+            beginConstructor(EnumSet.of(Modifier.PUBLIC),*paramsArray)
+            emitStatement("this.alias = alias")
+            emitStatement("this.name = name")
+            emitStatement("this.realmFieldType = realmFieldType")
+            emitStatement("this.PRIMARY_KEY = false")
+            emitStatement("this.REQUIRED = REQUIRED")
+            emitStatement("this.INDEXED = false")
+            endConstructor()
+            emitEmptyLine()
+        }
     }
 
     private fun emitGetterMethod(writer: JavaWriter) {
