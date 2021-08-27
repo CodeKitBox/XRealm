@@ -11,4 +11,5 @@ open class Student : RealmObject(){
     var id:Long? = UUID.randomUUID().mostSignificantBits
     var name:String = ""
     var sex:String? = null
+
 }

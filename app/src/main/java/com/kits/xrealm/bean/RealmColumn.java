@@ -32,6 +32,7 @@ public class RealmColumn {
      * 列是否是索引
      */
     public boolean INDEXED = false;
+    private Class<?> defValClazz = null;
 
     public RealmColumn(String alias, String internalName, RealmFieldType realmFieldType, boolean PRIMARY_KEY, boolean REQUIRED, boolean INDEXED) {
         this.alias = alias;
@@ -53,5 +54,13 @@ public class RealmColumn {
 
     public String getAlias() {
         return alias;
+    }
+
+    public Class<?> getDefValClazz() {
+        return defValClazz;
+    }
+
+    public void setDefValClazz(Class<?> defValClazz) {
+        this.defValClazz = defValClazz;
     }
 }

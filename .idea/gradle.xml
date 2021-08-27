@@ -14,6 +14,7 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/realm_annotations" />
             <option value="$PROJECT_DIR$/realm_processor" />
           </set>
         </option>

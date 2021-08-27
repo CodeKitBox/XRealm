@@ -43,15 +43,17 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'com.google.android.material:material:1.2.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+
     testImplementation 'junit:junit:4.+'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
     implementation 'androidx.multidex:multidex:2.0.1'
 
-    api "io.realm:realm-transformer:$realm_version"
-    api "io.realm:realm-annotations:$realm_version"
-    api "io.realm:realm-android-library:$realm_version"
-    api "io.realm:realm-android-kotlin-extensions:$realm_version"
+    implementation "io.realm:realm-transformer:$realm_version"
+    implementation "io.realm:realm-annotations:$realm_version"
+    implementation "io.realm:realm-android-library:$realm_version"
+    implementation "io.realm:realm-android-kotlin-extensions:$realm_version"
+    implementation project(path: ':realm_annotations')
     //kapt "io.realm:realm-annotations-processor:$realm_version"
     kapt project(path: ':realm_processor')
 }

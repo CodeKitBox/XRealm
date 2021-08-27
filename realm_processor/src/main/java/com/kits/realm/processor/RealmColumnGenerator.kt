@@ -18,8 +18,8 @@ class RealmColumnGenerator(private val env: ProcessingEnvironment) {
             "name" to String::class.java.name,
             "realmFieldType" to "RealmFieldType",
             "PRIMARY_KEY" to Boolean::class.java.name,
-            "REQUIRED" to Boolean::class.java.name,
-            "INDEXED" to Boolean::class.java.name
+            "INDEXED" to Boolean::class.java.name,
+            "REQUIRED" to Boolean::class.java.name
         )
 
     }
@@ -48,7 +48,8 @@ class RealmColumnGenerator(private val env: ProcessingEnvironment) {
             for ((key,value) in propertyMap){
                 emitField(value, key,EnumSet.of(Modifier.PRIVATE))
             }
-
+            // 单独生成关联的成员变量
+            emitField("String", "linkedClassName",EnumSet.of(Modifier.PRIVATE),"null")
             // 转换为构造函数参数
             val constructorParams = mutableListOf<String>()
             for ((key,value) in propertyMap){
@@ -61,12 +62,13 @@ class RealmColumnGenerator(private val env: ProcessingEnvironment) {
                 emitStatement("this.$key = $key")
             }
             endConstructor()
-            //
             emitConstructorParam4(this)
+            emitConstructorLinked(this)
             emitEmptyLine()
             // 生成getter 方法
             emitGetterMethod(this)
             emitGetterRealNameMethod(this)
+
             emitEmptyLine()
 
             endType()
@@ -106,6 +108,31 @@ class RealmColumnGenerator(private val env: ProcessingEnvironment) {
         }
     }
 
+    /**
+     * 生成关联其他数据库表的构造函数
+     */
+    private fun emitConstructorLinked(writer: JavaWriter){
+        writer.apply {
+            emitEmptyLine()
+            val paramsArray = arrayOf("String","alias",
+                "String", "name",
+                "RealmFieldType", "realmFieldType",
+                "String","linkedClassName")
+            beginConstructor(EnumSet.of(Modifier.PUBLIC),*paramsArray)
+            emitStatement("this.alias = alias")
+            emitStatement("this.name = name")
+            emitStatement("this.realmFieldType = realmFieldType")
+            emitStatement("this.PRIMARY_KEY = false")
+            emitStatement("this.REQUIRED = false")
+            emitStatement("this.INDEXED = false")
+            emitStatement("this.linkedClassName = linkedClassName")
+            endConstructor()
+            emitEmptyLine()
+        }
+    }
+
+
+
     private fun emitGetterMethod(writer: JavaWriter) {
         writer.apply {
             for ((key,value) in propertyMap){
@@ -118,13 +145,13 @@ class RealmColumnGenerator(private val env: ProcessingEnvironment) {
     }
 
     /**
-     * 生成 columnName 方法
+     * 生成 RealName 方法
      */
     private fun emitGetterRealNameMethod(writer: JavaWriter){
         writer.apply {
             emitEmptyLine()
             beginMethod("String", "columnName", EnumSet.of(Modifier.PUBLIC))
-            beginControlFlow("if(alias != null || alias.length() != 0)")
+            beginControlFlow("if(alias != null && alias.length() != 0)")
             emitStatement("return alias")
             endControlFlow()
             emitStatement("return name")
@@ -132,4 +159,5 @@ class RealmColumnGenerator(private val env: ProcessingEnvironment) {
             emitEmptyLine()
         }
     }
+
 }

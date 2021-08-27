@@ -18,6 +18,7 @@ package  com.kits.realm.processor
 
 import io.realm.annotations.*
 import  com.kits.realm.processor.nameconverter.NameConverter
+import io.realm.ex.InitDefVal
 import java.util.*
 import javax.annotation.processing.ProcessingEnvironment
 import javax.lang.model.element.*
@@ -26,6 +27,7 @@ import javax.lang.model.type.TypeKind
 import javax.lang.model.type.TypeMirror
 import javax.lang.model.util.Elements
 import javax.lang.model.util.Types
+import kotlin.reflect.KClass
 
 /**
  * Utility class for holding metadata for RealmProxy classes.
@@ -649,6 +651,9 @@ class ClassMetaData(env: ProcessingEnvironment, typeMirrors: TypeMirrors, privat
         // Determine name for field
         val internalFieldName = getInternalFieldName(fieldRef, defaultFieldNameFormatter)
         val field = RealmFieldElement(fieldRef, internalFieldName)
+//        defValClazz?.let {
+//            field.defValClazz = it
+//        }
         println("categorizeField  ${field.javaName}")
         if (field.getAnnotation(Index::class.java) != null) {
             if (!categorizeIndexField(element, field)) {
@@ -786,6 +791,7 @@ class ClassMetaData(env: ProcessingEnvironment, typeMirrors: TypeMirrors, privat
             return defaultConverter.convert(field.simpleName.toString())
         }
     }
+
 
     /**
      * This method only checks if the field has `@Required` annotation.

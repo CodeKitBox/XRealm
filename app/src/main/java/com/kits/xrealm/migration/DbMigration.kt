@@ -1,10 +1,7 @@
 package com.kits.xrealm.migration
 
 import io.realm.*
-import io.realm.annotations.Ignore
-import io.realm.annotations.Index
-import io.realm.annotations.PrimaryKey
-import io.realm.annotations.Required
+import io.realm.annotations.*
 import java.lang.reflect.Modifier
 
 class DbMigration : RealmMigration {
@@ -20,15 +17,33 @@ class DbMigration : RealmMigration {
     private fun migration(realm: DynamicRealm){
         val realmTableList = realm.sharedRealm.configuration.realmObjectClasses
         realmTableList.forEach {
-            table->
+                table->
             // 获取所有的属性
             val fields = table.declaredFields
             val fieldNameMap = mutableMapOf<String,Class<*>>()
             fields.forEach {
-                field ->
+                    field ->
                 if(!Modifier.isStatic(field.modifiers) && !Modifier.isTransient(field.modifiers)
                     && field.getAnnotation(Ignore::class.java) == null){
-                    fieldNameMap[field.name] = field.type
+
+                        val fieldAnnotation = field.getAnnotation(RealmField::class.java)
+                        var fileName:String? = null
+
+                        if(fieldAnnotation != null){
+                            if(fieldAnnotation.value.isNotEmpty()){
+                                fileName = fieldAnnotation.value
+                            }
+
+                            if(fieldAnnotation.name.isNotEmpty()){
+                                fileName = fieldAnnotation.name
+                            }
+                        }
+
+                        if(fileName!= null){
+                            fieldNameMap[fileName] = field.type
+                        }else{
+                            fieldNameMap[field.name] = field.type
+                        }
                 }
             }
             val tableName = RealmMasterDao.tableDaoMap[table.name]?.tableName
@@ -57,7 +72,8 @@ class DbMigration : RealmMigration {
                                 migrationAdd(realmObjectSchema,type,column)
                             }
                         }else{
-                            tableDao?.getColumnByName(name)?.let { column->
+                            val column = tableDao?.getColumnByName(name);
+                            if(column != null){
                                 migrationChange(realmObjectSchema,column)
                             }
                         }
@@ -67,6 +83,8 @@ class DbMigration : RealmMigration {
 
         }
     }
+
+
 
     /**
      * 数据库统一迁徙,对不存在的列进行新增
@@ -84,7 +102,7 @@ class DbMigration : RealmMigration {
         if(column.REQUIRED()){
             attributes.add(FieldAttribute.REQUIRED)
         }
-        realm.addField(column.columnName(),clazz, *attributes.toTypedArray())
+        realm.addField(column.name(),clazz, *attributes.toTypedArray())
     }
 
 
@@ -94,40 +112,56 @@ class DbMigration : RealmMigration {
      * @param column 列信息
      */
     private fun migrationChange(realm: RealmObjectSchema,column:RealmColumn){
-
+        println("判断列 ${column.name()} 属性变更")
         FieldAttribute.values().forEach {
+
             when(it){
-                FieldAttribute.REQUIRED->
+                FieldAttribute.REQUIRED->{
+                    println("属性 FieldAttribute.REQUIRED")
                     object :ChangeWrap(){
                         override fun removeChange() {
-                            realm.setRequired(column.columnName(),false)
+                            super.removeChange()
+                            realm.setRequired(column.name(),false)
                         }
 
                         override fun addChange() {
-                            realm.setRequired(column.columnName(),true)
+                            super.addChange()
+                            realm.setRequired(column.name(),true)
                         }
-                    }.apply(realm.isRequired(column.columnName()),column.REQUIRED())
-                FieldAttribute.INDEXED->
+                    }.apply(realm.isRequired(column.name()),column.REQUIRED())
+                }
+
+                FieldAttribute.INDEXED->{
+                    println("属性 FieldAttribute.INDEXED")
                     object :ChangeWrap(){
                         override fun removeChange() {
-                            realm.removeIndex(column.columnName())
+                            super.removeChange()
+                            realm.removeIndex(column.name())
                         }
 
                         override fun addChange() {
-                            realm.addIndex(column.columnName())
+                            super.addChange()
+                            realm.addIndex(column.name())
                         }
 
-                    }.apply(realm.hasIndex(column.columnName()),column.INDEXED())
-                FieldAttribute.PRIMARY_KEY->
+                    }.apply(realm.hasIndex(column.name()),column.INDEXED()||column.PRIMARY_KEY())
+                }
+
+                FieldAttribute.PRIMARY_KEY->{
+                    println("属性 FieldAttribute.PRIMARY_KEY")
                     object :ChangeWrap(){
                         override fun removeChange() {
+                            super.removeChange()
                             realm.removePrimaryKey()
                         }
                         override fun addChange() {
-                            realm.addPrimaryKey(column.columnName())
+                            super.addChange()
+                            realm.addPrimaryKey(column.name())
                         }
 
-                    }.apply(realm.isPrimaryKey(column.columnName()),column.PRIMARY_KEY())
+                    }.apply(realm.isPrimaryKey(column.name()),column.PRIMARY_KEY())
+                }
+
             }
         }
     }
@@ -144,6 +178,7 @@ class DbMigration : RealmMigration {
          * @param cur 升级后的列属性
          */
         fun apply(pre:Boolean, cur:Boolean){
+            println("升级前 属性 $pre ; 升级后 $cur")
             val high = (if(pre) exist else none).shl(1)
             val low = if(cur) exist else none
             when(high.or(low)){
@@ -156,18 +191,22 @@ class DbMigration : RealmMigration {
         /**
          * 属性无变化
          */
-         fun noChange(){
-
+         open fun noChange(){
+            println("noChange")
          }
 
         /**
          * 移除属性
          */
-        abstract  fun removeChange()
+        open fun removeChange(){
+            println("removeChange")
+        }
 
         /**
          * 新增属性
          */
-        abstract fun addChange()
+        open fun addChange(){
+            println("addChange")
+        }
     }
 }

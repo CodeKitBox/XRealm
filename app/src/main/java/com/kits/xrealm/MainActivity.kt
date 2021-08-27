@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import com.kits.xrealm.bean.Teacher
+import com.kits.xrealm.bean.TeacherDao
 import com.kits.xrealm.bean.build.BoyDao
 import io.realm.FieldAttribute
 import io.realm.Realm
@@ -14,6 +15,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        println("name alias == ${TeacherDao.name.alias}")
 
         findViewById<Button>(R.id.btnAdd).setOnClickListener {
             addTeacher()

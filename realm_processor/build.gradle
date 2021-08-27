@@ -15,6 +15,7 @@ dependencies {
     implementation 'com.squareup:javapoet:1.13.0'
     compileOnly files(Jvm.current().getToolsJar())
     compileOnly "io.realm:realm-annotations:$realm_version"
+    compileOnly project(path: ':realm_annotations')
 }
 
 sourceCompatibility = "1.8"

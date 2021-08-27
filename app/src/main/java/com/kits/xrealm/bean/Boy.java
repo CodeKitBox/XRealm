@@ -12,6 +12,9 @@ import io.realm.RealmResults;
 import io.realm.RealmSet;
 import io.realm.annotations.PrimaryKey;
 import io.realm.annotations.RealmClass;
+import io.realm.annotations.RealmExField;
+import io.realm.annotations.RealmField;
+import io.realm.ex.InitDefVal;
 
 @RealmClass
 public class Boy extends RealmObject {
@@ -29,6 +32,14 @@ public class Boy extends RealmObject {
     private RealmDictionary<String> test4;
 
     private RealmSet<Float> test5;
+    @RealmField(value = "MyTest61",name = "MyTest62")
+    private String test6;
+
+    @RealmExField(defValue = Test7DefVal.class)
+    private Float test7;
+
+    @RealmExField(defValue = Test7DefVal.class)
+    private Float test8;
 
     public String getNumber() {
         return number;
@@ -54,4 +65,14 @@ public class Boy extends RealmObject {
         this.test2 = test2;
     }
 
+
+    static class Test7DefVal implements InitDefVal<Float> {
+        @Override
+        public Float defVal() {
+            return 12.0f;
+        }
+    }
+
 }
+
+

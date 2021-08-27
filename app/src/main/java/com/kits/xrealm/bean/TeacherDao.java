@@ -13,7 +13,9 @@ public class TeacherDao implements ITableDao{
     public static RealmColumn id = new RealmColumn(" ", "id", RealmFieldType.INTEGER, Property.PRIMARY_KEY, !Property.INDEXED, !Property.REQUIRED);
     public static RealmColumn name = new RealmColumn(" ", "name", RealmFieldType.STRING, !Property.PRIMARY_KEY, !Property.INDEXED, Property.REQUIRED);
     public static RealmColumn job = new RealmColumn(" ", "job", RealmFieldType.STRING, !Property.PRIMARY_KEY, !Property.INDEXED, !Property.REQUIRED);
-
+    static {
+        name.alias = "123";
+    }
     public static RealmColumn[] columns = {
             id,name,job
     };
