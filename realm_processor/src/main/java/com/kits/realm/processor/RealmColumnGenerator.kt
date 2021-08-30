@@ -18,8 +18,8 @@ class RealmColumnGenerator(private val env: ProcessingEnvironment) {
             "name" to String::class.java.name,
             "realmFieldType" to "RealmFieldType",
             "PRIMARY_KEY" to Boolean::class.java.name,
-            "INDEXED" to Boolean::class.java.name,
-            "REQUIRED" to Boolean::class.java.name
+            "REQUIRED" to Boolean::class.java.name,
+            "INDEXED" to Boolean::class.java.name
         )
 
     }

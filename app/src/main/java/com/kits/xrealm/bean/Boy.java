@@ -35,10 +35,10 @@ public class Boy extends RealmObject {
     @RealmField(value = "MyTest61",name = "MyTest62")
     private String test6;
 
-    @RealmExField(defValue = Test7DefVal.class)
+   // @RealmExField(defValue = Test7DefVal.class)
     private Float test7;
 
-    @RealmExField(defValue = Test7DefVal.class)
+   // @RealmExField(defValue = Test7DefVal.class)
     private Float test8;
 
     public String getNumber() {

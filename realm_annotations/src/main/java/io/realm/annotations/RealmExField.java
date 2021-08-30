@@ -26,35 +26,14 @@ import io.realm.ex.InitDefVal;
 
 /**
  * Annotation used on fields in Realm model classes. It describes metadata about the field.
- * 注解 value  name 都是 修改内部列名 ，name的优先级大于 value
- * 注解 defValue 是列的默认值
- * 注意： 注解 RealmField 和  RealmExField 不能共存，RealmField 的优先级大于 RealmExField
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 @Inherited
 public @interface RealmExField {
-
-    /**
-     * Manually set the internal name used by Realm for this field. This will override any
-     *  set on the class or the module.
-     *
-     *  for more information about what setting the name means.
-     * @see #name()
-     */
-    String value() default "";
-
-    /**
-     * Manually set the internal name used by Realm for this field. This will override any
-     * set on the class or the module.
-     *
-     * @see for more information about what setting the name means.
-     */
-    String name() default "";
-
     /**
      * 列的默认值，在数据库表迁徙的时候，会修改原先存在的数据
      * @return
      */
-     Class<?> defValue();
+     Class<? extends InitDefVal> defValue();
 }

@@ -18,7 +18,7 @@ class App : Application(){
         val config = RealmConfiguration.Builder()
             .name("test.realm")
             .migration(DbMigration())
-            .schemaVersion(8)
+            .schemaVersion(12)
             .build()
         Realm.setDefaultConfiguration(config)
     }
