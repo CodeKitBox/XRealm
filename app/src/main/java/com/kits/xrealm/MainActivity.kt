@@ -4,8 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import com.kits.xrealm.bean.Teacher
-import com.kits.xrealm.bean.TeacherDao
-import com.kits.xrealm.bean.build.BoyDao
+//import com.kits.xrealm.bean.build.TeacherDao
 import io.realm.FieldAttribute
 import io.realm.Realm
 import io.realm.annotations.PrimaryKey
@@ -16,7 +15,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        println("name alias == ${TeacherDao.name.alias}")
+        //println("name alias == ${TeacherDao.id.columnName()}")
 
         findViewById<Button>(R.id.btnAdd).setOnClickListener {
             addTeacher()
@@ -90,7 +89,6 @@ class MainActivity : AppCompatActivity() {
         for (i in 0..10){
             val teacher = Teacher()
             teacher.name = "name $i"
-            teacher.job = "job $i"
 
             val realm = Realm.getDefaultInstance()
             realm.beginTransaction()

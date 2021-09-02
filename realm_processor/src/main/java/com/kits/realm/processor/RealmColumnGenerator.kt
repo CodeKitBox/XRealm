@@ -18,8 +18,9 @@ class RealmColumnGenerator(private val env: ProcessingEnvironment) {
             "name" to String::class.java.name,
             "realmFieldType" to "RealmFieldType",
             "PRIMARY_KEY" to Boolean::class.java.name,
-            "REQUIRED" to Boolean::class.java.name,
-            "INDEXED" to Boolean::class.java.name
+            "INDEXED" to Boolean::class.java.name,
+            "REQUIRED" to Boolean::class.java.name
+
         )
 
     }
@@ -101,8 +102,8 @@ class RealmColumnGenerator(private val env: ProcessingEnvironment) {
             emitStatement("this.name = name")
             emitStatement("this.realmFieldType = realmFieldType")
             emitStatement("this.PRIMARY_KEY = false")
-            emitStatement("this.REQUIRED = REQUIRED")
             emitStatement("this.INDEXED = false")
+            emitStatement("this.REQUIRED = REQUIRED")
             endConstructor()
             emitEmptyLine()
         }

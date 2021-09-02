@@ -2,6 +2,9 @@ package com.kits.xrealm.migration
 
 import io.realm.*
 import io.realm.annotations.*
+import java.util.*
+import kotlin.random.Random
+
 import io.realm.ex.InitDefVal
 import java.lang.reflect.Modifier
 import java.lang.reflect.Field
@@ -10,6 +13,25 @@ import kotlin.reflect.KClass
 class DbMigration : RealmMigration {
     override fun migrate(realm: DynamicRealm, oldVersion: Long, newVersion: Long) {
         println("数据库升级 oldVersion $oldVersion; newVersion $newVersion")
+//        if(oldVersion < 2){
+//
+//            realm.schema.get("Teacher")?.let {
+//                println("PrimaryKey == ${it.primaryKey}")
+//                it.removePrimaryKey()
+//                    .addField("pKey",String::class.java, FieldAttribute.REQUIRED)
+//                    .transform {obj->
+//                        obj.set("pKey", UUID.randomUUID().mostSignificantBits.toString())
+//                    }
+//                    .addPrimaryKey("pKey")
+//
+//                println("it has =="+it.hasField("pKey"))
+//                if (it.hasField("pKey")){
+//                   println("primaryKey == ${it.primaryKey}")
+//                   println("isRequired ==  ${it.isRequired("pKey")}")
+//                }
+//
+//            }
+//        }
         migration(realm)
     }
 
@@ -143,9 +165,11 @@ class DbMigration : RealmMigration {
      */
     private fun migrationAdd(realm: RealmObjectSchema, clazz:Class<*>,column:RealmColumn,
                              defValMap:MutableMap<String, KClass<out InitDefVal<Any>>>){
+        var isPrimaryKey = false
         val attributes = mutableListOf<FieldAttribute>()
         if(column.PRIMARY_KEY()){
-            attributes.add(FieldAttribute.PRIMARY_KEY)
+            removePrimaryKey(realm)
+            isPrimaryKey = true
         }
         if(column.INDEXED()){
             attributes.add(FieldAttribute.INDEXED)
@@ -153,15 +177,20 @@ class DbMigration : RealmMigration {
         if(column.REQUIRED()){
             attributes.add(FieldAttribute.REQUIRED)
         }
+        println("添加列 ${column.columnName()} $attributes")
         val defValClazz = defValMap[column.name()]
-        val realmObjectSchema = realm.addField(column.name(),clazz, *attributes.toTypedArray())
         if( defValClazz != null){
-            val defValIns = defValClazz.java.newInstance()
-            val defVal = defValIns.defVal()
-            println("初始化值 == $defVal")
-            realmObjectSchema.transform {
-                it.set(column.name(),defVal)
+            if (isPrimaryKey){
+                realm.addField(column.name(),clazz, *attributes.toTypedArray())
+                    .transform { it.set(column.name(), defValClazz.java.newInstance().defVal()) }
+                    .addPrimaryKey(column.name())
+            }else{
+                realm.addField(column.name(),clazz, *attributes.toTypedArray())
+                    .transform { it.set(column.name(),defValClazz.java.newInstance().defVal()) }
             }
+
+        }else{
+            realm.addField(column.name(),clazz, *attributes.toTypedArray())
         }
 
     }
@@ -178,30 +207,44 @@ class DbMigration : RealmMigration {
 
             when(it){
                 FieldAttribute.REQUIRED->{
-                    println("属性 FieldAttribute.REQUIRED")
-                    object :ChangeWrap(){
-                        override fun removeChange() {
-                            super.removeChange()
+                    object :ChangeWrap(it,realm,column){
+                        override fun removeChange(
+                            attr: FieldAttribute,
+                            realm: RealmObjectSchema,
+                            column: RealmColumn
+                        ) {
+                            super.removeChange(attr, realm, column)
                             realm.setRequired(column.name(),false)
                         }
 
-                        override fun addChange() {
-                            super.addChange()
+                        override fun addChange(
+                            attr: FieldAttribute,
+                            realm: RealmObjectSchema,
+                            column: RealmColumn
+                        ) {
+                            super.addChange(attr, realm, column)
                             realm.setRequired(column.name(),true)
                         }
                     }.apply(realm.isRequired(column.name()),column.REQUIRED())
                 }
 
                 FieldAttribute.INDEXED->{
-                    println("属性 FieldAttribute.INDEXED")
-                    object :ChangeWrap(){
-                        override fun removeChange() {
-                            super.removeChange()
+                    object :ChangeWrap(it,realm,column){
+                        override fun removeChange(
+                            attr: FieldAttribute,
+                            realm: RealmObjectSchema,
+                            column: RealmColumn
+                        ) {
+                            super.removeChange(attr, realm, column)
                             realm.removeIndex(column.name())
                         }
 
-                        override fun addChange() {
-                            super.addChange()
+                        override fun addChange(
+                            attr: FieldAttribute,
+                            realm: RealmObjectSchema,
+                            column: RealmColumn
+                        ) {
+                            super.addChange(attr, realm, column)
                             realm.addIndex(column.name())
                         }
 
@@ -209,14 +252,21 @@ class DbMigration : RealmMigration {
                 }
 
                 FieldAttribute.PRIMARY_KEY->{
-                    println("属性 FieldAttribute.PRIMARY_KEY")
-                    object :ChangeWrap(){
-                        override fun removeChange() {
-                            super.removeChange()
+                    object :ChangeWrap(it,realm,column){
+                        override fun removeChange(
+                            attr: FieldAttribute,
+                            realm: RealmObjectSchema,
+                            column: RealmColumn
+                        ) {
+                            super.removeChange(attr, realm, column)
                             realm.removePrimaryKey()
                         }
-                        override fun addChange() {
-                            super.addChange()
+                        override fun addChange(
+                            attr: FieldAttribute,
+                            realm: RealmObjectSchema,
+                            column: RealmColumn
+                        ) {
+                            super.addChange(attr, realm, column)
                             realm.addPrimaryKey(column.name())
                         }
 
@@ -227,8 +277,22 @@ class DbMigration : RealmMigration {
         }
     }
 
+    /**
+     * 移除主键操作，当表存在主键移除主键
+     */
+    private fun removePrimaryKey(realm: RealmObjectSchema){
+        try{
+            realm.primaryKey?.let {
+                realm.removePrimaryKey()
+            }
+        }catch (e:Exception){
+            println("无主键异常")
+        }
+    }
 
-    internal abstract class ChangeWrap{
+
+    internal abstract class ChangeWrap(private val attr:FieldAttribute,
+        private  val realm: RealmObjectSchema, private val column:RealmColumn){
         // 存在属性
         private val exist = 0b1
         // 不存在属性
@@ -243,31 +307,48 @@ class DbMigration : RealmMigration {
             val high = (if(pre) exist else none).shl(1)
             val low = if(cur) exist else none
             when(high.or(low)){
-                0,3-> noChange()
-                1->addChange()
-                2->removeChange()
+                0,3-> noChange(attr, realm, column)
+                1->addChange(attr, realm, column)
+                2->removeChange(attr, realm, column)
             }
         }
 
+        private fun transform(attr:FieldAttribute):String{
+            return when(attr){
+                FieldAttribute.REQUIRED->"FieldAttribute.REQUIRED"
+                FieldAttribute.PRIMARY_KEY->"FieldAttribute.PRIMARY_KEY"
+                FieldAttribute.INDEXED->"FieldAttribute.INDEXED"
+            }
+        }
         /**
          * 属性无变化
          */
-         open fun noChange(){
-            println("noChange")
+         open fun noChange(attr:FieldAttribute,realm: RealmObjectSchema, column:RealmColumn){
+            println("${transform(attr)} ${column.columnName()} noChange")
          }
 
         /**
          * 移除属性
          */
-        open fun removeChange(){
-            println("removeChange")
+        open fun removeChange(attr:FieldAttribute,realm: RealmObjectSchema, column:RealmColumn){
+            println("${transform(attr)} ${column.columnName()} removeChange")
         }
 
         /**
          * 新增属性
          */
-        open fun addChange(){
-            println("addChange")
+        open fun addChange(attr:FieldAttribute,realm: RealmObjectSchema, column:RealmColumn){
+            println("${transform(attr)} ${column.columnName()} addChange")
+            if (attr == FieldAttribute.PRIMARY_KEY){
+                try{
+                    realm.primaryKey?.let {
+                        realm.removePrimaryKey()
+                    }
+                }catch (e:Exception){
+                    println("无主键异常")
+                }
+
+            }
         }
     }
 }
