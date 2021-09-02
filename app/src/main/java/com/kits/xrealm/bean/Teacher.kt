@@ -7,10 +7,9 @@ import io.realm.ex.InitDefVal
 import java.util.*
 
 open class Teacher : RealmObject(){
-    @RealmExField(defValue = PKeyDefVal::class)
-    @PrimaryKey
-    var pKey:String=""
 //    @PrimaryKey
+//    var pKey:String=UUID.randomUUID().mostSignificantBits.toString()
+    @PrimaryKey
     var id:Long? = UUID.randomUUID().mostSignificantBits
     var name:String = ""
     @Index

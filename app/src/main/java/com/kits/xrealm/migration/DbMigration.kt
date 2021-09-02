@@ -16,23 +16,22 @@ class DbMigration : RealmMigration {
 //        if(oldVersion < 2){
 //
 //            realm.schema.get("Teacher")?.let {
-//                println("PrimaryKey == ${it.primaryKey}")
-//                it.removePrimaryKey()
-//                    .addField("pKey",String::class.java, FieldAttribute.REQUIRED)
-//                    .transform {obj->
-//                        obj.set("pKey", UUID.randomUUID().mostSignificantBits.toString())
-//                    }
-//                    .addPrimaryKey("pKey")
-//
-//                println("it has =="+it.hasField("pKey"))
-//                if (it.hasField("pKey")){
-//                   println("primaryKey == ${it.primaryKey}")
-//                   println("isRequired ==  ${it.isRequired("pKey")}")
-//                }
+//               // println("PrimaryKey == ${it.primaryKey}")
+//                    it.addField("id",String::class.java)
+//                        .addPrimaryKey("id")
 //
 //            }
 //        }
         migration(realm)
+        realm.schema.get("Teacher")?.let {
+            println("PrimaryKey == ${it.primaryKey}")
+        }
+        realm.schema.get("Student")?.let {
+            println("PrimaryKey == ${it.primaryKey}")
+        }
+        realm.schema.get("School")?.let {
+            println("PrimaryKey == ${it.primaryKey}")
+        }
     }
 
     /**
@@ -190,6 +189,9 @@ class DbMigration : RealmMigration {
             }
 
         }else{
+            if (isPrimaryKey){
+                attributes.add(FieldAttribute.PRIMARY_KEY)
+            }
             realm.addField(column.name(),clazz, *attributes.toTypedArray())
         }
 
